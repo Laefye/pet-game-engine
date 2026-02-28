@@ -1,0 +1,55 @@
+# Build artifacts
+build/
+cmake-build-debug/
+cmake-build-release/
+cmake-build-*/
+out/
+dist/
+
+# CMake
+CMakeCache.txt
+CMakeUserPresets.json
+CMakePresets.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln.DotSettings
+
+# CLion
+.clion_window_settings.xml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# Dependencies
+vcpkg_installed/
+conan/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
