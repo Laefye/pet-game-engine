@@ -24,15 +24,11 @@ jobs:
         update: true
         install: >-
           base-devel
-          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-gcc
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-ninja
           mingw-w64-x86_64-SDL3
-          mingw-w64-x86_64-SDL3_image
-          mingw-w64-x86_64-pkg-config
-          git
-          wget
-          curl
+          mingw-w64-x86_64-SDL3-image
     
     - name: Create build directory
       run: mkdir -p build
