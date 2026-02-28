@@ -24,7 +24,7 @@ jobs:
         update: true
         install: >-
           base-devel
-          mingw-w64-ucrt-x86_64-ucr
+          mingw-w64-ucrt-x86_64-gcc
           mingw-w64-ucrt-x86_64-cmake
           mingw-w64-ucrt-x86_64-ninja
           mingw-w64-ucrt-x86_64-sdl3
