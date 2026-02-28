@@ -27,8 +27,8 @@ jobs:
           mingw-w64-x86_64-gcc
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-ninja
-          mingw-w64-x86_64-SDL3
-          mingw-w64-x86_64-SDL3-image
+          mingw-w64-x86_64-sdl3
+          mingw-w64-x86_64-sdl3-image
     
     - name: Create build directory
       run: mkdir -p build
@@ -42,11 +42,11 @@ jobs:
       run: |
         cd build
         ninja
-    
+      
     - name: Upload artifacts
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts-msys2
-        path: build/bin/
+        path: build/
         retention-days: 7
