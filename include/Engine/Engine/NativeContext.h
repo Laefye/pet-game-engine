@@ -3,13 +3,17 @@
 #include <Engine/Log.h>
 #include <Engine/Tick.h>
 
+#include "Input.h"
+
 namespace Engine
 {
     struct NativeContext
     {
-        Engine::RenderEvent::Bus* render_bus;
-        Engine::TickEvent::Bus* tick_bus;
-        Engine::Log* log;
-        Engine::TextureLoader* texture_loader;
+        RenderEvent::Bus* render_bus;
+        TickEvent::Bus* tick_bus;
+        InputEvent::Bus* input_bus;
+        
+        Log* log;
+        TextureLoader* texture_loader;
     };
 }

@@ -6,6 +6,8 @@
 namespace Engine::Components {
     class PositionEvent {
     public:
+        virtual ~PositionEvent() = default;
+
         using Bus = EventBus<PositionEvent>;
         
         virtual void get_position(Vec2f& out_position) const = 0;

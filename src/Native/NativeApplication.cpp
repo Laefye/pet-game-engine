@@ -1,4 +1,5 @@
 #include <Native/NativeApplication.h>
+#include <Native/TextureLoader.h>
 
 namespace Engine::Native {
     NativeApplication::NativeApplication() {
@@ -19,8 +20,8 @@ namespace Engine::Native {
 
         log_bus.subscribe(this);
 
-        log = new Engine::Log(&log_bus);
-        texture_loader = new Engine::Native::TextureLoader(renderer);
+        log = new Log(&log_bus);
+        texture_loader = new TextureLoader(renderer);
     }
 
     void NativeApplication::render() {
@@ -33,12 +34,9 @@ namespace Engine::Native {
     }
 
     NativeApplication::~NativeApplication() {
-        if (texture_loader) {
-            delete texture_loader;
-        }
-        if (log) {
-            delete log;
-        }
+        delete texture_loader;
+        delete log;
+
         log_bus.unsubscribe(this);
         if (renderer) {
             SDL_DestroyRenderer(renderer);
@@ -49,10 +47,11 @@ namespace Engine::Native {
         SDL_Quit();
     }
 
-    Engine::NativeContext NativeApplication::make_context() {
-        return Engine::NativeContext{
+    NativeContext NativeApplication::make_context() {
+        return NativeContext{
             .render_bus = &render_bus,
             .tick_bus = &ticker.get_bus(),
+            .input_bus = &input_bus,
             .log = log,
             .texture_loader = texture_loader,
         };
@@ -65,6 +64,21 @@ namespace Engine::Native {
             while (SDL_PollEvent(&event)) {
                 if (event.type == SDL_EVENT_QUIT) {
                     running = false;
+                }
+                else if (event.type == SDL_EVENT_KEY_DOWN) {
+                    switch (event.key.key) {
+                        case SDLK_ESCAPE:
+                            running = false;
+                            break;
+                        case SDLK_SPACE:
+                            input_bus.broadcast(&InputEvent::on_key_down, Space);
+                            break;
+                        case SDLK_GRAVE:
+                            open_console();
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
             ticker.tick();
@@ -85,5 +99,24 @@ namespace Engine::Native {
         SDL_FRect sdl_dest = { dest.x * scale, dest.y * scale, dest.width * scale, dest.height * scale };
         SDL_FRect sdl_src = { src.x, src.y, src.width, src.height };
         SDL_RenderTexture(renderer, texture->impl->holder->texture, &sdl_src, &sdl_dest);
+    }
+
+    void NativeApplication::open_console() {
+        if (!log_window) {
+            log_window = new LogWindow(nullptr, this);
+            log_window->show();
+        }
+    }
+
+    void NativeApplication::close_console() {
+        if (log_window) {
+            log_window->close();
+            delete log_window;
+            log_window = nullptr;
+        }
+    }
+
+    NativeLogEvent::Bus* NativeApplication::get_log_bus() {
+        return &log_bus;
     }
 }

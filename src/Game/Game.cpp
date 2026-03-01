@@ -6,15 +6,18 @@ namespace Game
     Game::Game(Engine::NativeContext context) : context(context)
     {
         context.render_bus->subscribe(this);
+        context.tick_bus->subscribe(this);
+        context.input_bus->subscribe(this);
         background = context.texture_loader->load_texture("assets/background.png");
         if (!background) {
             context.log->info("Failed to load background texture");
         }
+        context.log->info("Loaded background texture");
         bird = context.texture_loader->load_texture("assets/bird.png");
         if (!bird) {
             context.log->info("Failed to load bird texture");
         }
-        context.tick_bus->subscribe(this);
+        context.log->info("Loaded bird texture");
 
         world_context = new Engine::Components::WorldContext(&this->context);
 
@@ -26,7 +29,8 @@ namespace Game
         };
 
         bird_entity = new Engine::Entity(0);
-        bird_entity->new_component<Engine::Components::Position>(world_context, 100.0f, 100.0f);
+        context.log->info("Creating bird entity with ID: " + std::to_string(bird_entity->get_entity_id()));
+        bird_entity->new_component<Engine::Components::Position>(world_context, 50.0f, 100.0f);
         bird_entity->new_component<Engine::Components::Sprite>(world_context, bird_description);
     }
 
@@ -38,6 +42,7 @@ namespace Game
         delete background;
         delete bird;
 
+        context.input_bus->unsubscribe(this);
         context.tick_bus->unsubscribe(this);
         context.render_bus->unsubscribe(this);
     }
@@ -49,14 +54,20 @@ namespace Game
 
     void Game::on_tick(float delta_time)
     {
-        static int frame = 0;
-        const Engine::Vec2f position = {50, 0 + offset};
+        Engine::Vec2f position = {};
+        world_context->get_position_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::PositionEvent::get_position, position);
+        position.y += 100.0f * delta_time;
         world_context->get_position_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::PositionEvent::set_position, position);
-        offset += delta_time * 50;
-        if (offset > 200) {
-            offset = 0;
-            frame++;
-            world_context->get_sprite_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::SpriteEvent::set_frame, frame);
+    }
+
+    void Game::on_key_down(Engine::Key key)
+    {
+        if (key == Engine::Key::Space) {
+            Engine::Vec2f position{};
+            world_context->get_position_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::PositionEvent::get_position, position);
+            position.y -= 50;
+            world_context->get_position_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::PositionEvent::set_position, position);
+            context.log->info("Bird jumped!");
         }
     }
 }

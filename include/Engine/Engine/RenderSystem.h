@@ -35,7 +35,7 @@ namespace Engine
     class RenderEvent
     {
     public:
-        ~RenderEvent() = default;
+        virtual ~RenderEvent() = default;
 
         using Bus = Engine::EventBus<RenderEvent>;
 

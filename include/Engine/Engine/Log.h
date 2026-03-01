@@ -7,7 +7,7 @@ namespace Engine
     class NativeLogEvent
     {
     public:
-        ~NativeLogEvent() = default;
+        virtual ~NativeLogEvent() = default;
 
         using Bus = Engine::EventBus<NativeLogEvent>;
 

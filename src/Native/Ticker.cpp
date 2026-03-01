@@ -16,7 +16,7 @@ namespace Engine::Native {
         last_tick_time = current_time;
         frame_count++;
         
-        tick_bus.emit(&TickEvent::on_tick, static_cast<float>(delta_time));
+        tick_bus.dispatch(&TickEvent::on_tick, static_cast<float>(delta_time));
     }
 
     Uint64 Ticker::get_frame_count() const {

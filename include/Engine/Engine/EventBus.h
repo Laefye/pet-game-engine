@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <Engine/EntityId.h>
 #include <map>
+#include <utility>
+#include <ranges>
 
 
 namespace Engine
@@ -37,46 +39,59 @@ namespace Engine
         }
 
         template<typename... Args>
-        using Event = void(E::*)(Args...);
-        template<typename... Args>
-        using ConstEvent = void(E::*)(Args...) const;
-
-        template<typename... Args>
-        void emit(Event<Args...> callback, Args&&... args)
+        void dispatch(void (E::*callback)(Args...), Args&&... args)
         {
-            for (auto& listener : listeners)
+            for (auto* listener : listeners)
             {
                 (listener->*callback)(std::forward<Args>(args)...);
             }
         }
 
         template<typename... Args>
-        void emit(ConstEvent<Args...> callback, Args&&... args) const
+        void dispatch(void (E::*callback)(Args...) const, Args&&... args) const
         {
-            for (auto& listener : listeners)
+            for (auto* listener : listeners)
             {
                 (listener->*callback)(std::forward<Args>(args)...);
             }
         }
 
         template<typename... Args>
-        void broadcast(ConstEvent<Args...> callback, Args&&... args) const
+        void broadcast(void (E::*callback)(Args...), Args&&... args)
         {
-            emit(callback, std::forward<Args>(args)...);
-            
+            dispatch(callback, std::forward<Args>(args)...);
+
             std::vector<EntityId> keys;
-            for (const auto& pair : listeners_by_entity_id) {
-                keys.push_back(pair.first);
+            keys.reserve(listeners_by_entity_id.size());
+            for (const auto& [key, _] : listeners_by_entity_id) {
+                keys.push_back(key);
             }
             std::ranges::sort(keys);
-            
+
+            for (const auto& key : keys) {
+                (listeners_by_entity_id.at(key)->*callback)(std::forward<Args>(args)...);
+            }
+        }
+
+        template<typename... Args>
+        void broadcast(void (E::*callback)(Args...) const, Args&&... args) const
+        {
+            dispatch(callback, std::forward<Args>(args)...);
+
+            std::vector<EntityId> keys;
+            keys.reserve(listeners_by_entity_id.size());
+            for (const auto& [key, _] : listeners_by_entity_id) {
+                keys.push_back(key);
+            }
+            std::ranges::sort(keys);
+
             for (const auto& key : keys) {
                 (listeners_by_entity_id.at(key)->*callback)(std::forward<Args>(args)...);
             }
         }
 
         template<typename... SourceArgs, typename... Args>
-        void to_entity(EntityId entity_id, Event<Args...> callback, SourceArgs&&... args)
+        void to_entity(EntityId entity_id, void (E::*callback)(Args...), SourceArgs&&... args)
         {
             if (listeners_by_entity_id.find(entity_id) != listeners_by_entity_id.end()) {
                 (listeners_by_entity_id.at(entity_id)->*callback)(std::forward<Args>(static_cast<Args>(args))...);
@@ -84,7 +99,7 @@ namespace Engine
         }
 
         template<typename... SourceArgs, typename... Args>
-        void to_entity(EntityId entity_id, ConstEvent<Args...> callback, SourceArgs&&... args) const
+        void to_entity(EntityId entity_id, void (E::*callback)(Args...) const, SourceArgs&&... args) const
         {
             if (listeners_by_entity_id.find(entity_id) != listeners_by_entity_id.end()) {
                 (listeners_by_entity_id.at(entity_id)->*callback)(std::forward<Args>(static_cast<Args>(args))...);

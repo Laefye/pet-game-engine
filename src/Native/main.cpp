@@ -1,12 +1,19 @@
 #include <Native/NativeApplication.h>
 #include <Game/Game.h>
+#include <QApplication>
 
 
-int main() {
-    Engine::Native::NativeApplication app;
+int main(int argc, char *argv[])
+{
+    QApplication app{argc, argv};
+    Engine::Native::NativeApplication gameApp;
 
-    Game::Game game(std::move(app.make_context()));
-    app.run();
-    
-    return 0;
+    for (int i = 0; i < argc; ++i) {
+        if (std::string(argv[i]) == "--console") {
+            gameApp.open_console();
+        }
+    }
+
+    Game::Game game(std::move(gameApp.make_context()));
+    gameApp.run();
 }

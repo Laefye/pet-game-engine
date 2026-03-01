@@ -8,6 +8,6 @@ namespace Engine
 
     void Log::info(const std::string& message)
     {
-        log_bus->emit(&NativeLogEvent::on_info, message);
+        log_bus->dispatch(&NativeLogEvent::on_info, message);
     }
 }
