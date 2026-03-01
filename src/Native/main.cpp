@@ -16,4 +16,6 @@ int main(int argc, char *argv[])
 
     Game::Game game(std::move(gameApp.make_context()));
     gameApp.run();
+
+    return QApplication::exec();
 }
