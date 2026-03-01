@@ -61,9 +61,24 @@ jobs:
       - name: Create AppDir
         run: |
           mkdir -p AppDir/usr/bin
-          cp build/FlappyBird AppDir/usr/bin/
+          cp build/FlappyBird AppDir/usr/bin/FlappyBird.bin
           cp -r assets AppDir/usr/bin/assets
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+          cat > AppDir/usr/bin/FlappyBird <<'WRAPPER'
+          #!/bin/bash
+          app_dir="$(dirname "$(readlink -f "$0")")"
+          plugin_dir="$app_dir/../lib/qt6/plugins"
+          export QT_QPA_PLATFORM_PLUGIN_PATH="$plugin_dir"
+          if [[ -n "$WAYLAND_DISPLAY" && -f "$plugin_dir/platforms/libqwayland-egl.so" ]]; then
+            export QT_QPA_PLATFORM=wayland
+          else
+            export QT_QPA_PLATFORM=xcb
+          fi
+          exec "$app_dir/FlappyBird.bin" "$@"
+          WRAPPER
+          chmod +x AppDir/usr/bin/FlappyBird
+          
           python3 - <<'PY'
           from PIL import Image
           import os
@@ -85,12 +100,28 @@ jobs:
           curl -L https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy.AppImage
           curl -L https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage -o linuxdeploy-plugin-qt.AppImage
           chmod +x linuxdeploy*.AppImage
-          ./linuxdeploy.AppImage --appdir AppDir --executable AppDir/usr/bin/FlappyBird --desktop-file AppDir/flappybird.desktop --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/flappybird.png
+          export QT_QPA_PLATFORM=offscreen
+          ./linuxdeploy.AppImage --appdir AppDir --executable AppDir/usr/bin/FlappyBird.bin --desktop-file AppDir/flappybird.desktop --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/flappybird.png
           ./linuxdeploy-plugin-qt.AppImage --appdir AppDir
           ./linuxdeploy.AppImage --appdir AppDir --output appimage
+
+      - name: Package release
+        run: |
+          mkdir -p release
+          cp ./*.AppImage release/
+          cp -r assets release/
+          cd release && tar -czf ../FlappyBird-release.tar.gz . && cd ..
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
           name: FlappyBird-AppImage
-          path: ./*.AppImage
+          path: |
+            ./*.AppImage
+            assets/
+
+      - name: Upload Release Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlappyBird-Release
+          path: FlappyBird-release.tar.gz
