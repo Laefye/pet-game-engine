@@ -67,6 +67,13 @@ target_include_directories(FlappyBird PUBLIC
 )
 target_link_libraries(FlappyBird PRIVATE SDL3::SDL3 SDL3_image::SDL3_image Engine Game EC)
 
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    if (WIN32)
+        set_target_properties(FlappyBird PROPERTIES
+            LINK_FLAGS "-mwindows"
+        )
+    endif(WIN32)
+endif()
 
 if (WIN32)
     add_custom_command(TARGET FlappyBird POST_BUILD
