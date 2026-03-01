@@ -11,7 +11,7 @@ namespace Game
     class Game : public Engine::RenderEvent, public Engine::TickEvent
     {
         Engine::NativeContext context;
-        Engine::Components::WorldContext world_context;
+        Engine::Components::WorldContext* world_context;
         Engine::Texture* background = nullptr;
         Engine::Texture* bird = nullptr;
         float offset = 0;

@@ -68,26 +68,26 @@ namespace Engine
             for (const auto& pair : listeners_by_entity_id) {
                 keys.push_back(pair.first);
             }
-            std::sort(keys.begin(), keys.end());
+            std::ranges::sort(keys);
             
             for (const auto& key : keys) {
                 (listeners_by_entity_id.at(key)->*callback)(std::forward<Args>(args)...);
             }
         }
 
-        template<typename... Args>
-        void to_entity(EntityId entity_id, Event<Args...> callback, Args&&... args)
+        template<typename... SourceArgs, typename... Args>
+        void to_entity(EntityId entity_id, Event<Args...> callback, SourceArgs&&... args)
         {
             if (listeners_by_entity_id.find(entity_id) != listeners_by_entity_id.end()) {
-                (listeners_by_entity_id.at(entity_id)->*callback)(std::forward<Args>(args)...);
+                (listeners_by_entity_id.at(entity_id)->*callback)(std::forward<Args>(static_cast<Args>(args))...);
             }
         }
 
-        template<typename... Args>
-        void to_entity(EntityId entity_id, ConstEvent<Args...> callback, Args&&... args) const
+        template<typename... SourceArgs, typename... Args>
+        void to_entity(EntityId entity_id, ConstEvent<Args...> callback, SourceArgs&&... args) const
         {
             if (listeners_by_entity_id.find(entity_id) != listeners_by_entity_id.end()) {
-                (listeners_by_entity_id.at(entity_id)->*callback)(std::forward<Args>(args)...);
+                (listeners_by_entity_id.at(entity_id)->*callback)(std::forward<Args>(static_cast<Args>(args))...);
             }
         }
     };

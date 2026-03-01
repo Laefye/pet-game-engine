@@ -1,5 +1,6 @@
 #pragma once
 #include <Engine/NativeContext.h>
+#include <EC/SpriteEvent.h>
 #include <EC/PositionEvent.h>
 
 namespace Engine::Components
@@ -7,6 +8,12 @@ namespace Engine::Components
     struct WorldContext
     {
         NativeContext* native_context;
-        PositionEvent::Bus* position_bus;
+        explicit WorldContext(NativeContext* context);
+    private:
+        PositionEvent::Bus position_bus;
+        SpriteEvent::Bus sprite_bus;
+    public:
+        PositionEvent::Bus* get_position_bus();
+        SpriteEvent::Bus* get_sprite_bus();
     };
 }

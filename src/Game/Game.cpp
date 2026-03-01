@@ -16,24 +16,28 @@ namespace Game
         }
         context.tick_bus->subscribe(this);
 
-        world_context.native_context = &context;
-        world_context.position_bus = new Engine::Components::PositionEvent::Bus();
+        world_context = new Engine::Components::WorldContext(&this->context);
+
+        Engine::Components::SpriteDescription bird_description = {
+            .width = 32,
+            .height = 32,
+            .frames = 3,
+            .texture = bird
+        };
 
         bird_entity = new Engine::Entity(0);
-        bird_entity->new_component<Engine::Components::Position>(&world_context, 100.0f, 100.0f);
-        bird_entity->new_component<Engine::Components::Sprite>(&world_context, bird);
+        bird_entity->new_component<Engine::Components::Position>(world_context, 100.0f, 100.0f);
+        bird_entity->new_component<Engine::Components::Sprite>(world_context, bird_description);
     }
 
     Game::~Game()
     {
         delete bird_entity;
-        delete world_context.position_bus;
-        if (background) {
-            delete background;
-        }
-        if (bird) {
-            delete bird;
-        }
+        delete world_context;
+
+        delete background;
+        delete bird;
+
         context.tick_bus->unsubscribe(this);
         context.render_bus->unsubscribe(this);
     }
@@ -45,8 +49,14 @@ namespace Game
 
     void Game::on_tick(float delta_time)
     {
+        static int frame = 0;
         const Engine::Vec2f position = {50, 0 + offset};
-        world_context.position_bus->to_entity(bird_entity->get_entity_id(), &Engine::Components::PositionEvent::set_position, position);
+        world_context->get_position_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::PositionEvent::set_position, position);
         offset += delta_time * 50;
+        if (offset > 200) {
+            offset = 0;
+            frame++;
+            world_context->get_sprite_bus()->to_entity(bird_entity->get_entity_id(), &Engine::Components::SpriteEvent::set_frame, frame);
+        }
     }
 }
