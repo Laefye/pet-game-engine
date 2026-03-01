@@ -1,7 +1,7 @@
 #pragma once
 #include <QWidget>
 #include <Native/ConsoleOpener.h>
-#include <QListWidget>
+#include <QTextEdit>
 #include <QVBoxLayout>
 
 
@@ -9,8 +9,9 @@ namespace Engine::Native {
     class LogWindow : public QWidget, public NativeLogEvent {
         Q_OBJECT
         ConsoleOpener *console_opener;
-        QListWidget *log_list;
+        QTextEdit *log_list;
         QVBoxLayout *main_layout;
+        QTextCharFormat char_format;
     public:
         explicit LogWindow(QWidget *parent = nullptr, ConsoleOpener* console_opener = nullptr);
         ~LogWindow() override;

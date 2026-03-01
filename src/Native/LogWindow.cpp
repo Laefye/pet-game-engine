@@ -8,7 +8,8 @@ namespace Engine::Native {
 
         main_layout = new QVBoxLayout();
         setLayout(main_layout);
-        log_list = new QListWidget();
+        log_list = new QTextEdit();
+        log_list->setReadOnly(true);
         main_layout->addWidget(log_list);
 
         console_opener->get_log_bus()->subscribe(this);
@@ -19,7 +20,9 @@ namespace Engine::Native {
     }
 
     void LogWindow::on_info(const std::string &message) {
-        log_list->addItem(QString::fromStdString(message));
+        char_format.setForeground(QColor("cyan"));
+        log_list->setCurrentCharFormat(char_format);
+        log_list->append("[INFO] -> " + QString::fromStdString(message));
     }
 
     void LogWindow::closeEvent(QCloseEvent *) {
