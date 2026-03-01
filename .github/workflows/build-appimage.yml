@@ -1,0 +1,92 @@
+name: Build AppImage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  SDL_REPO: https://github.com/libsdl-org/SDL.git
+  SDL_IMAGE_REPO: https://github.com/libsdl-org/SDL_image.git
+  SDL_TAG: main
+  SDL_IMAGE_TAG: main
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build cmake pkg-config curl patchelf \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libxkbcommon-dev libwayland-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libdrm-dev libpulse-dev \
+            libjpeg-dev libpng-dev zlib1g-dev qt6-base-dev qt6-base-dev-tools python3-pil
+
+      - name: Build SDL3
+        run: |
+          git clone --depth 1 --branch "${SDL_TAG}" "${SDL_REPO}"
+          cmake -S SDL -B SDL/build -G Ninja \
+            -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST=OFF \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake --build SDL/build
+          sudo cmake --install SDL/build
+
+      - name: Build SDL3_image
+        run: |
+          git clone --depth 1 --branch "${SDL_IMAGE_TAG}" "${SDL_IMAGE_REPO}"
+          cmake -S SDL_image -B SDL_image/build -G Ninja \
+            -DSDLIMAGE_BUILD_SHARED=ON -DSDLIMAGE_BUILD_STATIC=OFF \
+            -DSDLIMAGE_BACKEND_STB=ON -DSDLIMAGE_TESTS=OFF \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+          cmake --build SDL_image/build
+          sudo cmake --install SDL_image/build
+
+      - name: Configure project
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Create AppDir
+        run: |
+          mkdir -p AppDir/usr/bin
+          cp build/FlappyBird AppDir/usr/bin/
+          cp -r assets AppDir/usr/bin/assets
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          python3 - <<'PY'
+          from PIL import Image
+          import os
+          os.makedirs('AppDir/usr/share/icons/hicolor/256x256/apps', exist_ok=True)
+          img = Image.new('RGBA', (256, 256), (255, 128, 0, 255))
+          img.save('AppDir/usr/share/icons/hicolor/256x256/apps/flappybird.png')
+          PY
+          cat > AppDir/flappybird.desktop <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=FlappyBird
+          Exec=FlappyBird
+          Icon=flappybird
+          Categories=Game;
+          EOF
+
+      - name: Package AppImage
+        run: |
+          curl -L https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy.AppImage
+          curl -L https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage -o linuxdeploy-plugin-qt.AppImage
+          chmod +x linuxdeploy*.AppImage
+          ./linuxdeploy.AppImage --appdir AppDir --executable AppDir/usr/bin/FlappyBird --desktop-file AppDir/flappybird.desktop --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/flappybird.png
+          ./linuxdeploy-plugin-qt.AppImage --appdir AppDir
+          ./linuxdeploy.AppImage --appdir AppDir --output appimage
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlappyBird-AppImage
+          path: ./*.AppImage
